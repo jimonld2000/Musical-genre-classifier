@@ -3,7 +3,7 @@ from tensorflow.keras.preprocessing.image import ImageDataGenerator
 from model import create_cnn_model
 import tensorflow as tf
 
-def train_model(base_path, input_shape, batch_size=32, epochs=10):
+def train_model(base_path, input_shape, batch_size=50, epochs=20):
     # Initialize the ImageDataGenerator with preprocessing
     train_datagen = ImageDataGenerator(
         rescale=1./255,
