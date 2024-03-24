@@ -1,22 +1,45 @@
-import numpy as np
 import os
-import tensorflow
+import tensorflow as tf
 from tensorflow.keras.preprocessing.image import ImageDataGenerator
-from sklearn.model_selection import train_test_split
 
-def load_data(base_path, genres, test_size=0.2, val_size=0.25):
-    file_paths = []
-    labels = []
-    
-    for genre in genres:
-        genre_path = os.path.join(base_path, genre)
-        for filename in os.listdir(genre_path):
-            if filename.endswith('.png'):
-                file_paths.append(os.path.join(genre_path, filename))
-                labels.append(genre)
+def load_data(base_path, img_size=(1000, 400), batch_size=32):
+    """
+    Loads data from directories and prepares it for training.
 
-    # Split the dataset
-    X_train, X_test, y_train, y_test = train_test_split(file_paths, labels, test_size=test_size, random_state=42, stratify=labels)
-    X_train, X_val, y_train, y_val = train_test_split(X_train, y_train, test_size=val_size, random_state=42, stratify=y_train)
+    Parameters:
+    - base_path: The base directory containing 'train', 'validate', and 'test' folders.
+    - img_size: Tuple specifying the image size. Default is (1000, 400) for Mel spectrograms.
+    - batch_size: Batch size for the data generators.
 
-    return X_train, X_val, X_test, y_train, y_val, y_test
+    Returns:
+    - train_generator, val_generator, test_generator: Data generators for training, validation, and testing.
+    """
+    train_datagen = ImageDataGenerator(rescale=1./255)
+    val_datagen = ImageDataGenerator(rescale=1./255)
+    test_datagen = ImageDataGenerator(rescale=1./255)
+
+    train_generator = train_datagen.flow_from_directory(
+        directory=os.path.join(base_path, 'train'),
+        target_size=(256, 100),  # Example of resizing to 256x256
+        batch_size=batch_size,
+        color_mode='grayscale',
+        class_mode='categorical'
+    )
+
+    val_generator = val_datagen.flow_from_directory(
+        directory=os.path.join(base_path, 'validation'),
+        target_size=(256, 100),  # Example of resizing to 256x256
+        batch_size=batch_size,
+        color_mode='grayscale',
+        class_mode='categorical'
+    )
+
+    test_generator = test_datagen.flow_from_directory(
+        directory=os.path.join(base_path, 'test'),
+        target_size=(256, 100),  # Example of resizing to 256x256
+        batch_size=batch_size,
+        color_mode='grayscale',
+        class_mode='categorical'
+    )
+
+    return train_generator, val_generator, test_generator

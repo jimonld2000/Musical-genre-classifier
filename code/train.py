@@ -1,9 +1,9 @@
 from data_preprocessing import load_data
 from tensorflow.keras.preprocessing.image import ImageDataGenerator
-from model import create_cnn_model
 import tensorflow as tf
+from cnn_model import CNN  # Adjust this import based on your actual file structure
 
-def train_model(base_path, input_shape, batch_size=50, epochs=20):
+def train_model(base_path, input_shape, num_classes, batch_size=50, epochs=20):
     # Initialize the ImageDataGenerator with preprocessing
     train_datagen = ImageDataGenerator(
         rescale=1./255,
@@ -16,34 +16,22 @@ def train_model(base_path, input_shape, batch_size=50, epochs=20):
         fill_mode='nearest'
     )
 
-    # Assuming the structure of your data is base_path/train for training data
-    # and base_path/validation for validation data
-    train_generator = train_datagen.flow_from_directory(
-        directory=base_path + 'train/',  # Adjust as necessary
-        target_size=input_shape[:2],  # Height and width of the input images
-        batch_size=batch_size,
-        color_mode='grayscale',  # or 'rgb' if your images are in color
-        class_mode='categorical'
-    )
+    # Load data using the load_data function instead of flow_from_directory
+    # This change assumes load_data returns data generators
+    train_generator, val_generator, _, _ = load_data(base_path, genres = ['blues', 'classical', 'country', 'disco', 'hiphop', 'jazz', 'metal', 'pop', 'reggae', 'rock']
+, batch_size=batch_size)  # Update genres list as necessary
 
-    validation_datagen = ImageDataGenerator(rescale=1./255)
-    validation_generator = validation_datagen.flow_from_directory(
-        directory=base_path + 'validation/',  # Adjust as necessary
-        target_size=input_shape[:2],  # Height and width of the input images
-        batch_size=batch_size,
-        color_mode='grayscale',  # or 'rgb' if your images are in color
-        class_mode='categorical'
-    )
+    # Instantiate the CNN model
+    model = CNN(num_classes=num_classes)
 
-    # Create the CNN model
-    model = create_cnn_model(input_shape, len(train_generator.class_indices))
+    # Compile the model (necessary if using custom training loops or the fit method without a compiled model)
+    model.compile(optimizer='adam', loss='sparse_categorical_crossentropy', metrics=['accuracy'])
 
     # Train the model
     history = model.fit(
         train_generator,
         epochs=epochs,
-        validation_data=validation_generator
+        validation_data=val_generator
     )
 
     return model
-
